@@ -510,14 +510,14 @@
     </div>
 
     <div class="note">
-      ※ データはこの端末・このブラウザ内に保存されます。保険スライダーは5%刻みで、操作中に数値が追従します。
+      ※ データはこの端末・このブラウザ内に保存されます。文字入力中にキーボードが閉じないよう、入力完了後に再計算します。
     </div>
   </div>
 
   <script>
     const GAS_URL = "https://script.google.com/macros/s/AKfycbz1GCjkN3wl9n-qFrJnWUfWrBFGv73HmGq6sV8VWuVpTJ7qDIaEo3vAaZzjaxITbEFc/exec";
-    const STORAGE_KEY = "silver_items_v6_slider";
-    const OLD_KEYS = ["silver_items_v5_dark", "silver_items_v4"];
+    const STORAGE_KEY = "silver_items_v7_keyboard_fix";
+    const OLD_KEYS = ["silver_items_v6_slider", "silver_items_v5_dark", "silver_items_v4"];
     const PRICE_KEY = "silver_spot_price_v1";
     const PRICE_TIME_KEY = "silver_spot_price_time_v1";
     const NEXT_ID_KEY = "silver_next_id_v1";
@@ -773,14 +773,22 @@
         return;
       }
 
-      updateItem(id, field, target.value);
+      /*
+        iPhone Safari対策:
+        入力中に render() すると input要素が作り直され、キーボードが閉じる。
+        そのため、名前・重量・取得価格は入力中はデータ保存だけ行い、
+        入力欄から離れたタイミング(change)で画面全体を再計算する。
+      */
+      updateItem(id, field, target.value, false);
     });
 
     document.addEventListener("change", (e) => {
       const target = e.target;
       const id = Number(target.dataset.id);
       const field = target.dataset.field;
-      if (id && field === "insurance") render();
+      if (!id || !field) return;
+
+      updateItem(id, field, target.value, true);
     });
 
     document.addEventListener("click", (e) => {
