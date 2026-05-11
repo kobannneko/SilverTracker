@@ -1,0 +1,799 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#111111" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="銀資産管理" />
+  <title>銀アクセサリー資産管理</title>
+  <style>
+    :root {
+      --bg: #111111;
+      --card: #1b1b1b;
+      --text: #f5f5f5;
+      --sub: #c9c9c9;
+      --muted: #8e8e8e;
+      --line: #333333;
+      --input: #151515;
+      --green: #78c257;
+      --blue: #67a7ff;
+      --red: #ff7272;
+      --yellow: #e0a23a;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .app {
+      max-width: 480px;
+      margin: 0 auto;
+      padding-bottom: calc(48px + env(safe-area-inset-bottom));
+      min-height: 100vh;
+      background: var(--bg);
+    }
+
+    .header {
+      padding: calc(20px + env(safe-area-inset-top)) 16px 14px;
+      border-bottom: 0.5px solid var(--line);
+    }
+
+    .eyebrow {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--muted);
+      letter-spacing: 0.1em;
+      margin-bottom: 4px;
+    }
+
+    .title {
+      font-size: 22px;
+      font-weight: 800;
+      color: var(--text);
+    }
+
+    .card {
+      margin: 14px 16px 0;
+      background: var(--card);
+      border: 0.5px solid var(--line);
+      border-radius: 16px;
+      padding: 14px 16px 12px;
+    }
+
+    .label {
+      font-size: 11px;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+
+    .price {
+      font-size: 36px;
+      font-weight: 800;
+      line-height: 1;
+      margin-bottom: 10px;
+      color: var(--text);
+    }
+
+    .row-between {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .status {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      min-width: 0;
+      flex-wrap: wrap;
+    }
+
+    .dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      display: inline-block;
+      flex-shrink: 0;
+    }
+
+    .dot.loading { animation: pulse 1.2s ease-in-out infinite; }
+
+    button {
+      font-family: inherit;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    button:active {
+      opacity: 0.75;
+      transform: scale(0.98);
+    }
+
+    .small-button {
+      background: #181818;
+      border: 0.5px solid #444;
+      border-radius: 8px;
+      padding: 4px 12px;
+      font-size: 12px;
+      color: var(--sub);
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .manual {
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 0.5px solid var(--line);
+      display: none;
+    }
+
+    .manual.show { display: block; }
+
+    input {
+      font-family: inherit;
+      color: var(--text);
+      -webkit-appearance: none;
+      appearance: none;
+    }
+
+    input[type="number"] {
+      appearance: textfield;
+    }
+
+    input[type="number"]::-webkit-outer-spin-button,
+    input[type="number"]::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+
+    .manual-input-row {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
+
+    .manual-input {
+      width: 90px;
+      font-size: 14px;
+      padding: 5px 8px;
+      border: 0.5px solid #444;
+      border-radius: 8px;
+      background: var(--input);
+    }
+
+    .totals {
+      padding: 12px 16px 0;
+    }
+
+    .total-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .total-card {
+      background: var(--card);
+      border: 0.5px solid var(--line);
+      border-radius: 12px;
+      padding: 12px 14px;
+      min-width: 0;
+    }
+
+    .total-value {
+      font-size: 20px;
+      font-weight: 800;
+      color: var(--text);
+      word-break: break-word;
+    }
+
+    .unit {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    .items {
+      padding: 16px 16px 0;
+    }
+
+    .section-title {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--muted);
+      letter-spacing: 0.08em;
+      margin-bottom: 10px;
+    }
+
+    .list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .item-card {
+      background: var(--card);
+      border: 0.5px solid var(--line);
+      border-radius: 16px;
+      padding: 14px 14px 12px;
+    }
+
+    .name-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .name-input {
+      flex: 1;
+      font-size: 15px;
+      font-weight: 700;
+      border: none;
+      background: none;
+      color: var(--text);
+      outline: none;
+      min-width: 0;
+    }
+
+    .delete-button {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: #777;
+      font-size: 16px;
+      padding: 2px;
+      line-height: 1;
+    }
+
+    .field-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .field-label {
+      font-size: 12px;
+      color: var(--sub);
+      min-width: 58px;
+    }
+
+    .number-input {
+      width: 92px;
+      font-size: 15px;
+      font-weight: 700;
+      text-align: right;
+      padding: 5px 8px;
+      border: 0.5px solid #444;
+      border-radius: 8px;
+      color: var(--text);
+      background: var(--input);
+    }
+
+    .insurance-row {
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .slider-wrap {
+      position: relative;
+      flex: 1;
+      height: 44px;
+      display: flex;
+      align-items: center;
+      min-width: 0;
+    }
+
+    .slider-track,
+    .slider-fill {
+      position: absolute;
+      left: 0;
+      height: 8px;
+      border-radius: 999px;
+      pointer-events: none;
+    }
+
+    .slider-track {
+      right: 0;
+      background: #3e3e3e;
+    }
+
+    .slider-fill {
+      width: 50%;
+      background: #7a7a7a;
+    }
+
+    .insurance-slider {
+      position: relative;
+      z-index: 2;
+      width: 100%;
+      height: 44px;
+      margin: 0;
+      padding: 0;
+      background: transparent;
+      appearance: none;
+      -webkit-appearance: none;
+      cursor: pointer;
+      touch-action: pan-y;
+      accent-color: transparent;
+    }
+
+    .insurance-slider::-webkit-slider-runnable-track {
+      height: 8px;
+      background: transparent;
+      border: none;
+    }
+
+    .insurance-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 42px;
+      height: 34px;
+      border-radius: 17px;
+      background: #f5f5f5;
+      border: 0.5px solid rgba(0,0,0,0.08);
+      box-shadow:
+        0 2px 8px rgba(0,0,0,0.35),
+        inset 0 1px 0 rgba(255,255,255,0.85);
+      margin-top: -13px;
+      transition: transform 0.06s ease, background 0.12s ease;
+    }
+
+    .insurance-slider:active::-webkit-slider-thumb {
+      transform: scale(1.06);
+      background: #ffffff;
+    }
+
+    .insurance-slider::-moz-range-track {
+      height: 8px;
+      background: transparent;
+      border: none;
+    }
+
+    .insurance-slider::-moz-range-thumb {
+      width: 42px;
+      height: 34px;
+      border-radius: 17px;
+      background: #f5f5f5;
+      border: 0.5px solid rgba(0,0,0,0.08);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.35);
+    }
+
+    .insurance-value {
+      font-size: 20px;
+      font-weight: 900;
+      color: var(--text);
+      min-width: 62px;
+      text-align: right;
+      letter-spacing: -0.03em;
+    }
+
+    .result-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      padding-top: 10px;
+      border-top: 0.5px solid var(--line);
+    }
+
+    .formula {
+      font-size: 11px;
+      color: var(--muted);
+      min-width: 0;
+      line-height: 1.4;
+    }
+
+    .item-value {
+      font-size: 18px;
+      font-weight: 800;
+      color: var(--text);
+      white-space: nowrap;
+    }
+
+    .profit {
+      margin-top: 6px;
+      font-size: 11px;
+      color: var(--muted);
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .profit-positive { color: #8ad86d; }
+    .profit-negative { color: #ff8a8a; }
+
+    .add-button {
+      width: 100%;
+      margin-top: 10px;
+      padding: 13px;
+      background: var(--card);
+      border: 0.5px dashed #555;
+      border-radius: 16px;
+      font-size: 14px;
+      color: var(--sub);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    .note {
+      padding: 14px 16px 0;
+      font-size: 11px;
+      line-height: 1.6;
+      color: var(--muted);
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="app">
+    <div class="header">
+      <div class="eyebrow">SILVER PORTFOLIO</div>
+      <div class="title">銀アクセサリー資産管理</div>
+    </div>
+
+    <div class="card">
+      <div class="label">SV925 買取価格（1gあたり）　<span style="color:#666">出典: 買取蔵</span></div>
+      <div class="price" id="spotPrice">—</div>
+      <div class="row-between">
+        <div class="status">
+          <span class="dot" id="statusDot"></span>
+          <span style="font-size:11px;color:#c9c9c9" id="statusLabel">待機中</span>
+          <span style="font-size:11px;color:#8e8e8e" id="fetchTime"></span>
+        </div>
+        <button class="small-button" id="refreshBtn">↻ 更新</button>
+      </div>
+
+      <div class="manual" id="manualBox">
+        <div style="font-size:11px;color:#ff8a8a;margin-bottom:8px">
+          自動取得できませんでした。手動で入力してください。
+        </div>
+        <div class="manual-input-row">
+          <input class="manual-input" id="manualInput" type="number" placeholder="例: 397" min="0" step="1" />
+          <span style="font-size:12px;color:#c9c9c9">円/g</span>
+          <button class="small-button" id="manualBtn" style="padding:5px 14px">適用</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="totals">
+      <div class="total-grid">
+        <div class="total-card">
+          <div class="label" style="margin-bottom:4px">総重量</div>
+          <div class="total-value" id="totalWeight">0.0</div>
+          <div class="unit">グラム</div>
+        </div>
+        <div class="total-card">
+          <div class="label" style="margin-bottom:4px">合計推定買取額</div>
+          <div class="total-value" id="totalValue">—</div>
+          <div class="unit">円（保険込み）</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="totals">
+      <div class="total-grid">
+        <div class="total-card">
+          <div class="label" style="margin-bottom:4px">合計取得価格</div>
+          <div class="total-value" id="totalCost">¥0</div>
+          <div class="unit">購入額の合計</div>
+        </div>
+        <div class="total-card">
+          <div class="label" style="margin-bottom:4px">差額</div>
+          <div class="total-value" id="totalProfit">—</div>
+          <div class="unit">推定買取額 − 取得価格</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="items">
+      <div class="section-title">アクセサリー一覧</div>
+      <div class="list" id="itemList"></div>
+      <button class="add-button" id="addBtn">＋ アクセサリーを追加</button>
+    </div>
+
+    <div class="note">
+      ※ データはこの端末・このブラウザ内に保存されます。保険スライダーは5%刻みで、操作中に数値が追従します。
+    </div>
+  </div>
+
+  <script>
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbz1GCjkN3wl9n-qFrJnWUfWrBFGv73HmGq6sV8VWuVpTJ7qDIaEo3vAaZzjaxITbEFc/exec";
+    const STORAGE_KEY = "silver_items_v6_slider";
+    const OLD_KEYS = ["silver_items_v5_dark", "silver_items_v4"];
+    const PRICE_KEY = "silver_spot_price_v1";
+    const PRICE_TIME_KEY = "silver_spot_price_time_v1";
+    const NEXT_ID_KEY = "silver_next_id_v1";
+
+    const defaultItems = [
+      { id: 1, name: "シルバーリング", weight: 5.2, insurance: 80, cost: 0 },
+      { id: 2, name: "シルバーネックレス", weight: 12.8, insurance: 75, cost: 0 },
+    ];
+
+    let items = loadItems();
+    let spotPrice = loadNumber(PRICE_KEY);
+    let fetchStatus = spotPrice ? "manual" : "idle";
+    let fetchTime = localStorage.getItem(PRICE_TIME_KEY) || "";
+    let nextId = Number(localStorage.getItem(NEXT_ID_KEY)) || 100;
+
+    const el = (id) => document.getElementById(id);
+
+    function loadItems() {
+      try {
+        let s = localStorage.getItem(STORAGE_KEY);
+        if (!s) {
+          for (const k of OLD_KEYS) {
+            s = localStorage.getItem(k);
+            if (s) break;
+          }
+        }
+        const parsed = s ? JSON.parse(s) : defaultItems;
+        if (!Array.isArray(parsed)) return defaultItems;
+        return parsed.map((i) => ({
+          id: Number(i.id) || Date.now(),
+          name: String(i.name || "名称未設定"),
+          weight: Number(i.weight) || 0,
+          insurance: roundInsurance(Number(i.insurance) || 75),
+          cost: Number(i.cost) || 0,
+        }));
+      } catch {
+        return defaultItems;
+      }
+    }
+
+    function loadNumber(key) {
+      const v = Number(localStorage.getItem(key));
+      return v > 0 ? v : null;
+    }
+
+    function saveItems() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+      localStorage.setItem(NEXT_ID_KEY, String(nextId));
+    }
+
+    function roundInsurance(v) {
+      return Math.min(100, Math.max(50, Math.round(v / 5) * 5));
+    }
+
+    function formatYen(v) {
+      return "¥" + Math.round(v).toLocaleString("ja-JP");
+    }
+
+    function nowText(suffix = "") {
+      const now = new Date();
+      return now.toLocaleDateString("ja-JP") + " " + now.toLocaleTimeString("ja-JP", { hour: "2-digit", minute: "2-digit" }) + suffix;
+    }
+
+    function calcValue(weight, insurance) {
+      if (!spotPrice) return null;
+      return Math.round(Number(weight) * spotPrice * (Number(insurance) / 100));
+    }
+
+    function updateStatus() {
+      const info = {
+        idle:    { color: "#8e8e8e", dot: false, label: "待機中" },
+        loading: { color: "#e0a23a", dot: true,  label: "取得中…" },
+        ok:      { color: "#78c257", dot: false, label: "自動取得" },
+        manual:  { color: "#67a7ff", dot: false, label: "手動入力" },
+        error:   { color: "#ff7272", dot: false, label: "取得失敗" },
+      }[fetchStatus] || { color: "#8e8e8e", dot: false, label: "" };
+
+      const dot = el("statusDot");
+      dot.style.background = info.color;
+      dot.className = "dot" + (info.dot ? " loading" : "");
+      el("statusLabel").textContent = info.label;
+      el("fetchTime").textContent = fetchTime ? "· " + fetchTime : "";
+      el("manualBox").classList.toggle("show", fetchStatus === "error");
+    }
+
+    function render() {
+      el("spotPrice").textContent = spotPrice ? formatYen(spotPrice) : "—";
+
+      const totalWeight = items.reduce((s, i) => s + (Number(i.weight) || 0), 0);
+      const totalCost = items.reduce((s, i) => s + (Number(i.cost) || 0), 0);
+      const totalValue = spotPrice
+        ? items.reduce((s, i) => s + (calcValue(i.weight, i.insurance) || 0), 0)
+        : null;
+      const totalProfit = totalValue !== null ? totalValue - totalCost : null;
+
+      el("totalWeight").textContent = totalWeight.toFixed(1);
+      el("totalValue").textContent = totalValue !== null ? formatYen(totalValue) : "—";
+      el("totalCost").textContent = formatYen(totalCost);
+      el("totalProfit").textContent = totalProfit !== null ? formatYen(totalProfit) : "—";
+      el("totalProfit").className = "total-value " + (
+        totalProfit > 0 ? "profit-positive" : totalProfit < 0 ? "profit-negative" : ""
+      );
+
+      const list = el("itemList");
+      list.innerHTML = "";
+
+      items.forEach((item) => {
+        const card = document.createElement("div");
+        card.className = "item-card";
+
+        const val = calcValue(item.weight, item.insurance);
+        const priceText = spotPrice ? spotPrice.toLocaleString("ja-JP") : "?";
+        const profit = val !== null ? val - (Number(item.cost) || 0) : null;
+        const profitClass = profit > 0 ? "profit-positive" : profit < 0 ? "profit-negative" : "";
+        const fillWidth = ((item.insurance - 50) / 50) * 100;
+
+        card.innerHTML = `
+          <div class="name-row">
+            <input class="name-input" type="text" value="${escapeHtml(item.name)}" data-id="${item.id}" data-field="name" />
+            <button class="delete-button" data-delete="${item.id}">✕</button>
+          </div>
+
+          <div class="field-row">
+            <span class="field-label">重量</span>
+            <input class="number-input" type="number" min="0" step="0.1" value="${item.weight}" data-id="${item.id}" data-field="weight" />
+            <span style="font-size:12px;color:#c9c9c9">g</span>
+          </div>
+
+          <div class="field-row">
+            <span class="field-label">取得価格</span>
+            <input class="number-input" type="number" min="0" step="100" value="${item.cost}" data-id="${item.id}" data-field="cost" />
+            <span style="font-size:12px;color:#c9c9c9">円</span>
+          </div>
+
+          <div class="field-row insurance-row">
+            <span class="field-label">保険</span>
+            <div class="slider-wrap">
+              <div class="slider-track"></div>
+              <div class="slider-fill" style="width:${fillWidth}%"></div>
+              <input class="insurance-slider" type="range" min="50" max="100" step="5" value="${item.insurance}" data-id="${item.id}" data-field="insurance" />
+            </div>
+            <span class="insurance-value">${item.insurance}%</span>
+          </div>
+
+          <div class="result-row">
+            <div class="formula">${item.weight}g × ¥${priceText} × ${item.insurance}%</div>
+            <div class="item-value">${val !== null ? formatYen(val) : "—"}</div>
+          </div>
+
+          <div class="profit">
+            <span>差額（推定買取額 − 取得価格）</span>
+            <span class="${profitClass}">${profit !== null ? formatYen(profit) : "—"}</span>
+          </div>
+        `;
+        list.appendChild(card);
+      });
+
+      updateStatus();
+      saveItems();
+    }
+
+    function updateSliderVisual(slider) {
+      const wrap = slider.closest(".slider-wrap");
+      const fill = wrap ? wrap.querySelector(".slider-fill") : null;
+      const valueLabel = slider.closest(".insurance-row")?.querySelector(".insurance-value");
+      const min = Number(slider.min);
+      const max = Number(slider.max);
+      const val = Number(slider.value);
+      const percent = ((val - min) / (max - min)) * 100;
+
+      if (fill) fill.style.width = percent + "%";
+      if (valueLabel) valueLabel.textContent = val + "%";
+    }
+
+    function escapeHtml(str) {
+      return String(str)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;");
+    }
+
+    async function fetchPrice() {
+      fetchStatus = "loading";
+      render();
+
+      try {
+        const res = await fetch(GAS_URL, { cache: "no-store" });
+        const json = await res.json();
+        const val = Number.parseFloat(json.price);
+
+        if (!Number.isNaN(val) && val > 0) {
+          spotPrice = val;
+          fetchStatus = "ok";
+          fetchTime = nowText();
+          localStorage.setItem(PRICE_KEY, String(spotPrice));
+          localStorage.setItem(PRICE_TIME_KEY, fetchTime);
+        } else {
+          throw new Error("invalid");
+        }
+      } catch (e) {
+        fetchStatus = "error";
+      }
+      render();
+    }
+
+    function applyManual() {
+      const v = Number.parseFloat(el("manualInput").value);
+      if (!v || v <= 0) return;
+
+      spotPrice = v;
+      fetchStatus = "manual";
+      fetchTime = nowText("（手動）");
+      localStorage.setItem(PRICE_KEY, String(spotPrice));
+      localStorage.setItem(PRICE_TIME_KEY, fetchTime);
+      el("manualInput").value = "";
+      render();
+    }
+
+    function updateItem(id, field, val, shouldRender = true) {
+      items = items.map((i) => {
+        if (i.id !== id) return i;
+        if (field === "name") return { ...i, name: val };
+        if (field === "weight") return { ...i, weight: Number.parseFloat(val) || 0 };
+        if (field === "cost") return { ...i, cost: Number.parseFloat(val) || 0 };
+        if (field === "insurance") return { ...i, insurance: roundInsurance(Number.parseInt(val, 10) || 75) };
+        return i;
+      });
+      saveItems();
+      if (shouldRender) render();
+    }
+
+    function addItem() {
+      const id = nextId++;
+      items = [...items, { id, name: "新しいアクセサリー", weight: 0, insurance: 75, cost: 0 }];
+      render();
+    }
+
+    function deleteItem(id) {
+      items = items.filter((i) => i.id !== id);
+      render();
+    }
+
+    document.addEventListener("input", (e) => {
+      const target = e.target;
+      const id = Number(target.dataset.id);
+      const field = target.dataset.field;
+      if (!id || !field) return;
+
+      if (field === "insurance") {
+        updateSliderVisual(target);
+        updateItem(id, field, target.value, false);
+        return;
+      }
+
+      updateItem(id, field, target.value);
+    });
+
+    document.addEventListener("change", (e) => {
+      const target = e.target;
+      const id = Number(target.dataset.id);
+      const field = target.dataset.field;
+      if (id && field === "insurance") render();
+    });
+
+    document.addEventListener("click", (e) => {
+      const del = e.target.dataset.delete;
+      if (del) deleteItem(Number(del));
+    });
+
+    el("refreshBtn").addEventListener("click", fetchPrice);
+    el("manualBtn").addEventListener("click", applyManual);
+    el("addBtn").addEventListener("click", addItem);
+
+    render();
+    fetchPrice();
+  </script>
+</body>
+</html>
